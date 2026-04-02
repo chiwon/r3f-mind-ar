@@ -6,7 +6,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
-import { Matrix4, Vector3, Quaternion, PerspectiveCamera } from 'three';
+import { Matrix4, Vector3, Quaternion, PerspectiveCamera, Color } from 'three';
 import { ARContext } from './ARContext';
 import type {
   ARProviderProps,
@@ -31,8 +31,14 @@ export function ARProvider({
   onReady,
   onError,
 }: ARProviderProps) {
-  const { camera: rawCamera, gl } = useThree();
+  const { camera: rawCamera, gl, scene } = useThree();
   const camera = rawCamera as PerspectiveCamera;
+
+  // Ensure renderer + scene are transparent so video shows through
+  useEffect(() => {
+    gl.setClearColor(new Color(0x000000), 0);
+    scene.background = null;
+  }, [gl, scene]);
   const controllerRef = useRef<MindARController | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const anchorsRef = useRef<Map<number, AnchorState>>(new Map());
@@ -53,14 +59,16 @@ export function ARProvider({
     video.style.position = 'absolute';
     video.style.top = '0';
     video.style.left = '0';
-    video.style.zIndex = '-2';
     video.style.width = '100%';
     video.style.height = '100%';
     video.style.objectFit = 'cover';
 
+    // DOM order: video first, then canvas — canvas stacks on top naturally
     const container = gl.domElement.parentElement;
     if (container) {
-      container.appendChild(video);
+      container.style.position = 'relative';
+      container.insertBefore(video, gl.domElement);
+      gl.domElement.style.position = 'relative';
     }
 
     const stream = await navigator.mediaDevices.getUserMedia({
