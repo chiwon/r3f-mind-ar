@@ -1,0 +1,26 @@
+{
+  "name": "r3f-mind-ar-example-basic",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@react-three/fiber": "^9.5.0",
+    "@react-three/drei": "^10.7.7",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "three": "^0.183.2",
+    "r3f-mind-ar": "link:../../"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.2",
+    "@types/three": "^0.183.0",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.2",
+    "@vitejs/plugin-react": "^4.4.1"
+  }
+}
