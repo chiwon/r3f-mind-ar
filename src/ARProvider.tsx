@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -47,10 +48,7 @@ export function ARProvider({
   const [isReady, setIsReady] = useState(false);
   const [facingUser, setFacingUser] = useState(flipUserCamera);
 
-  // Mutable ref — consumed directly via context, no React state for anchors
   const anchorsDirtyRef = useRef(false);
-  const anchorsVersionRef = useRef(0);
-  const [, setAnchorsVersion] = useState(0);
 
   const setupVideo = useCallback(async (): Promise<HTMLVideoElement> => {
     const video = document.createElement('video');
@@ -81,12 +79,17 @@ export function ARProvider({
 
     video.srcObject = stream;
 
-    return new Promise((resolve) => {
+    return new Promise<HTMLVideoElement>((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('Video metadata load timeout'));
+      }, 10_000);
+
       video.addEventListener('loadedmetadata', () => {
+        clearTimeout(timeout);
         video.setAttribute('width', String(video.videoWidth));
         video.setAttribute('height', String(video.videoHeight));
         resolve(video);
-      });
+      }, { once: true });
     });
   }, [gl.domElement, facingUser]);
 
@@ -190,6 +193,7 @@ export function ARProvider({
   const stopTracking = useCallback(() => {
     if (controllerRef.current) {
       controllerRef.current.stopProcessVideo();
+      controllerRef.current.dispose?.();
       controllerRef.current = null;
     }
     if (videoRef.current) {
@@ -198,6 +202,7 @@ export function ARProvider({
       videoRef.current.remove();
       videoRef.current = null;
     }
+    anchorsRef.current.clear();
     setIsTracking(false);
   }, []);
 
@@ -208,13 +213,9 @@ export function ARProvider({
     // Will restart via autoplay effect or manual call
   }, [isTracking, stopTracking]);
 
-  // Bump version counter to notify consumers — no Map copy, no object allocation
+  // Clear dirty flag each frame — consumers read anchorsRef directly in useFrame
   useFrame(() => {
-    if (anchorsDirtyRef.current) {
-      anchorsDirtyRef.current = false;
-      anchorsVersionRef.current += 1;
-      setAnchorsVersion(anchorsVersionRef.current);
-    }
+    anchorsDirtyRef.current = false;
   });
 
   // Autoplay
@@ -228,17 +229,21 @@ export function ARProvider({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoplay, facingUser]);
 
+  // Stable context value — only changes when tracking state changes, not on every frame
+  const contextValue = useMemo(
+    () => ({
+      anchors: anchorsRef.current,
+      startTracking,
+      stopTracking,
+      switchCamera,
+      isTracking,
+      isReady,
+    }),
+    [startTracking, stopTracking, switchCamera, isTracking, isReady],
+  );
+
   return (
-    <ARContext.Provider
-      value={{
-        anchors: anchorsRef.current,
-        startTracking,
-        stopTracking,
-        switchCamera,
-        isTracking,
-        isReady,
-      }}
-    >
+    <ARContext.Provider value={contextValue}>
       {children}
     </ARContext.Provider>
   );

@@ -1,4 +1,4 @@
-import { forwardRef, Suspense, useImperativeHandle, useRef } from 'react';
+import { forwardRef, Suspense, useEffect, useImperativeHandle, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { ARProvider } from './ARProvider';
 import { useAR } from './ARContext';
@@ -17,11 +17,15 @@ function ARHandleBridge({
   onRef: (handle: ARViewHandle) => void;
 }) {
   const ar = useAR();
-  onRef({
-    startTracking: ar.startTracking,
-    stopTracking: ar.stopTracking,
-    switchCamera: ar.switchCamera,
-  });
+
+  useEffect(() => {
+    onRef({
+      startTracking: ar.startTracking,
+      stopTracking: ar.stopTracking,
+      switchCamera: ar.switchCamera,
+    });
+  }, [ar.startTracking, ar.stopTracking, ar.switchCamera, onRef]);
+
   return null;
 }
 
