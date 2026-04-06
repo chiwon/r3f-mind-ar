@@ -49,6 +49,7 @@ export function ARProvider({
   const [facingUser, setFacingUser] = useState(flipUserCamera);
 
   const anchorsDirtyRef = useRef(false);
+  const startingRef = useRef(false);
 
   const setupVideo = useCallback(async (): Promise<HTMLVideoElement> => {
     const video = document.createElement('video');
@@ -81,6 +82,9 @@ export function ARProvider({
 
     return new Promise<HTMLVideoElement>((resolve, reject) => {
       const timeout = setTimeout(() => {
+        // Clean up orphaned video + stream on timeout
+        stream.getTracks().forEach((track) => track.stop());
+        video.remove();
         reject(new Error('Video metadata load timeout'));
       }, 10_000);
 
@@ -94,6 +98,9 @@ export function ARProvider({
   }, [gl.domElement, facingUser]);
 
   const startTracking = useCallback(async () => {
+    if (startingRef.current) return;
+    startingRef.current = true;
+
     try {
       // Setup video
       const video = await setupVideo();
@@ -176,6 +183,8 @@ export function ARProvider({
     } catch (err) {
       console.error('[r3f-mind-ar] Failed to start tracking:', err);
       onError?.(err instanceof Error ? err : new Error(String(err)));
+    } finally {
+      startingRef.current = false;
     }
   }, [
     setupVideo,

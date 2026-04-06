@@ -1,4 +1,4 @@
-import { forwardRef, Suspense, useEffect, useImperativeHandle, useRef } from 'react';
+import { forwardRef, Suspense, useCallback, useEffect, useImperativeHandle, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { ARProvider } from './ARProvider';
 import { useAR } from './ARContext';
@@ -62,6 +62,9 @@ export const ARView = forwardRef<ARViewHandle, ARViewProps>(
     ref
   ) => {
     const handleRef = useRef<ARViewHandle | null>(null);
+    const setHandle = useCallback((h: ARViewHandle) => {
+      handleRef.current = h;
+    }, []);
 
     useImperativeHandle(ref, () => ({
       startTracking: () =>
@@ -96,11 +99,7 @@ export const ARView = forwardRef<ARViewHandle, ARViewProps>(
             onReady={onReady}
             onError={onError}
           >
-            <ARHandleBridge
-              onRef={(h) => {
-                handleRef.current = h;
-              }}
-            />
+            <ARHandleBridge onRef={setHandle} />
             {children}
           </ARProvider>
         </Suspense>
