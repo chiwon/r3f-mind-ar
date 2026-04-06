@@ -47,9 +47,10 @@ export function ARProvider({
   const [isReady, setIsReady] = useState(false);
   const [facingUser, setFacingUser] = useState(flipUserCamera);
 
-  // Mutable ref to avoid re-render on every matrix update
+  // Mutable ref — consumed directly via context, no React state for anchors
   const anchorsDirtyRef = useRef(false);
-  const [anchorsSnapshot, setAnchorsSnapshot] = useState<Map<number, AnchorState>>(new Map());
+  const anchorsVersionRef = useRef(0);
+  const [, setAnchorsVersion] = useState(0);
 
   const setupVideo = useCallback(async (): Promise<HTMLVideoElement> => {
     const video = document.createElement('video');
@@ -135,6 +136,9 @@ export function ARProvider({
           )
       );
 
+      // Reusable matrix for onUpdate — avoids GC pressure (~30 calls/sec)
+      const _tmpMat = new Matrix4();
+
       // Handle tracking updates — write to ref, not state
       controller.onUpdate = (data: TrackingUpdateData) => {
         if (data.type === 'updateMatrix' && data.targetIndex !== undefined) {
@@ -142,12 +146,10 @@ export function ARProvider({
           const postMatrix = postMatricesRef.current[targetIndex];
 
           if (worldMatrix !== null && worldMatrix !== undefined && postMatrix) {
-            const m = new Matrix4()
-              .fromArray(worldMatrix)
-              .multiply(postMatrix);
+            _tmpMat.fromArray(worldMatrix).multiply(postMatrix);
 
             anchorsRef.current.set(targetIndex, {
-              matrix: m.toArray(),
+              matrix: _tmpMat.toArray(),
               visible: true,
             });
           } else {
@@ -206,11 +208,12 @@ export function ARProvider({
     // Will restart via autoplay effect or manual call
   }, [isTracking, stopTracking]);
 
-  // Sync anchor ref to state at R3F frame rate (not on every CV callback)
+  // Bump version counter to notify consumers — no Map copy, no object allocation
   useFrame(() => {
     if (anchorsDirtyRef.current) {
-      setAnchorsSnapshot(new Map(anchorsRef.current));
       anchorsDirtyRef.current = false;
+      anchorsVersionRef.current += 1;
+      setAnchorsVersion(anchorsVersionRef.current);
     }
   });
 
@@ -228,7 +231,7 @@ export function ARProvider({
   return (
     <ARContext.Provider
       value={{
-        anchors: anchorsSnapshot,
+        anchors: anchorsRef.current,
         startTracking,
         stopTracking,
         switchCamera,

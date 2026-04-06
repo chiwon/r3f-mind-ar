@@ -1,6 +1,6 @@
 {
   "name": "r3f-mind-ar",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "MindAR image tracking components for React Three Fiber",
   "type": "module",
   "main": "dist/index.cjs",
