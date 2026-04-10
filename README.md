@@ -9,7 +9,7 @@ Drop AR marker tracking into your R3F scene with a few components — no manual 
 - Image-based AR marker tracking powered by [MindAR](https://github.com/hiukim/mind-ar-js)
 - Declarative R3F components (`<ARView>`, `<ARAnchor>`)
 - TypeScript first with full type definitions
-- `useFrame`-synced matrix updates for smooth rendering
+- `useFrame`-synced matrix updates with smooth lerp interpolation
 - Lightweight — no extra state management dependencies
 - Imperative API via ref (`startTracking`, `stopTracking`, `switchCamera`)
 
@@ -83,6 +83,7 @@ Attaches children to a tracked image target.
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `target` | `number` | `0` | Target index in the `.mind` file |
+| `lerp` | `number` | `1` | Smoothing factor (0–1). Lower = smoother, higher = snappier |
 | `onAnchorFound` | `() => void` | — | Called when target is detected |
 | `onAnchorLost` | `() => void` | — | Called when target is lost |
 
@@ -119,6 +120,17 @@ import { ARProvider, ARAnchor } from 'r3f-mind-ar';
 ```
 
 ## Examples
+
+Live demos (mobile-friendly, camera required):
+
+| Example | Description |
+|---------|-------------|
+| [Basic](https://chiwon.github.io/r3f-mind-ar/examples/basic/) | Place a 3D model on a tracked image target with smooth lerp |
+| [Video Texture](https://chiwon.github.io/r3f-mind-ar/examples/video-texture/) | Glowing atom trails orbiting the model using Trail + Bloom |
+
+Each demo includes a downloadable AR target card on the start screen.
+
+Run locally:
 
 ```bash
 cd examples/basic
