@@ -81,6 +81,12 @@ export interface ARAnchorProps extends Omit<ComponentProps<'group'>, 'visible'> 
   children?: ReactNode;
   /** Target index to anchor to (default: 0) */
   target?: number;
+  /**
+   * Lerp factor for position/rotation/scale smoothing (0–1).
+   * 1 = instant snap (default), lower = smoother (e.g. 0.15 for gentle smoothing).
+   * Uses frame-rate-independent exponential smoothing.
+   */
+  lerp?: number;
   /** Callback when target is found */
   onAnchorFound?: () => void;
   /** Callback when target is lost */

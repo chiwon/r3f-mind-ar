@@ -200,6 +200,7 @@ export function ARProvider({
   ]);
 
   const stopTracking = useCallback(() => {
+    startingRef.current = false;
     if (controllerRef.current) {
       controllerRef.current.stopProcessVideo();
       controllerRef.current.dispose?.();

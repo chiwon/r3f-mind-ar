@@ -1,5 +1,5 @@
 {
-  "name": "r3f-mind-ar-example-basic",
+  "name": "r3f-mind-ar-example-video-texture",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -11,6 +11,7 @@
   "dependencies": {
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
+    "@react-three/postprocessing": "^3.0.4",
     "r3f-mind-ar": "file:../../",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

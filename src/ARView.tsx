@@ -86,23 +86,23 @@ export const ARView = forwardRef<ARViewHandle, ARViewProps>(
         }}
         {...canvasProps}
       >
-        <Suspense fallback={null}>
-          <ARProvider
-            imageTargets={imageTargets}
-            maxTrack={maxTrack}
-            filterMinCF={filterMinCF}
-            filterBeta={filterBeta}
-            warmupTolerance={warmupTolerance}
-            missTolerance={missTolerance}
-            autoplay={autoplay}
-            flipUserCamera={flipUserCamera}
-            onReady={onReady}
-            onError={onError}
-          >
-            <ARHandleBridge onRef={setHandle} />
+        <ARProvider
+          imageTargets={imageTargets}
+          maxTrack={maxTrack}
+          filterMinCF={filterMinCF}
+          filterBeta={filterBeta}
+          warmupTolerance={warmupTolerance}
+          missTolerance={missTolerance}
+          autoplay={autoplay}
+          flipUserCamera={flipUserCamera}
+          onReady={onReady}
+          onError={onError}
+        >
+          <ARHandleBridge onRef={setHandle} />
+          <Suspense fallback={null}>
             {children}
-          </ARProvider>
-        </Suspense>
+          </Suspense>
+        </ARProvider>
       </Canvas>
     );
   }

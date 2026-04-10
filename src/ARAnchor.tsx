@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Matrix4, Group } from 'three';
+import { Matrix4, Group, Vector3, Quaternion } from 'three';
 import { useAR } from './ARContext';
 import type { ARAnchorProps } from './types';
 
@@ -8,7 +8,7 @@ import type { ARAnchorProps } from './types';
  * ARAnchor — attaches children to a tracked image target.
  *
  * ```tsx
- * <ARAnchor target={0} onAnchorFound={() => console.log('found!')}>
+ * <ARAnchor target={0} lerp={0.15} onAnchorFound={() => console.log('found!')}>
  *   <mesh><boxGeometry /><meshNormalMaterial /></mesh>
  * </ARAnchor>
  * ```
@@ -16,6 +16,7 @@ import type { ARAnchorProps } from './types';
 export function ARAnchor({
   children,
   target = 0,
+  lerp = 1,
   onAnchorFound,
   onAnchorLost,
   ...groupProps
@@ -23,33 +24,60 @@ export function ARAnchor({
   const groupRef = useRef<Group>(null);
   const { anchors } = useAR();
   const wasVisibleRef = useRef(false);
+  const hasInitRef = useRef(false);
 
-  // Apply matrix every frame for smooth updates
-  useFrame(() => {
+  // Smoothed pose (reused each frame — no GC)
+  const curPos   = useRef(new Vector3());
+  const curQuat  = useRef(new Quaternion());
+  const curScale = useRef(new Vector3(1, 1, 1));
+
+  // Scratch objects for decompose target
+  const _tgtPos   = useRef(new Vector3());
+  const _tgtQuat  = useRef(new Quaternion());
+  const _tgtScale = useRef(new Vector3());
+  const _tgtMat   = useRef(new Matrix4());
+
+  useFrame((_, delta) => {
     const group = groupRef.current;
     if (!group) return;
 
     const anchor = anchors.get(target);
 
     if (anchor?.visible && anchor.matrix) {
-      // Show and apply matrix
       if (!wasVisibleRef.current) {
         wasVisibleRef.current = true;
         onAnchorFound?.();
       }
       group.visible = true;
-      group.matrix.fromArray(anchor.matrix);
+
+      _tgtMat.current.fromArray(anchor.matrix);
+      _tgtMat.current.decompose(_tgtPos.current, _tgtQuat.current, _tgtScale.current);
+
+      if (!hasInitRef.current || lerp >= 1) {
+        // First frame visible — snap directly to avoid initial lerp from origin
+        curPos.current.copy(_tgtPos.current);
+        curQuat.current.copy(_tgtQuat.current);
+        curScale.current.copy(_tgtScale.current);
+        hasInitRef.current = true;
+      } else {
+        // Frame-rate-independent exponential smoothing
+        const t = 1 - Math.pow(1 - lerp, delta * 60);
+        curPos.current.lerp(_tgtPos.current, t);
+        curQuat.current.slerp(_tgtQuat.current, t);
+        curScale.current.lerp(_tgtScale.current, t);
+      }
+
+      group.matrix.compose(curPos.current, curQuat.current, curScale.current);
     } else {
-      // Hide
       if (wasVisibleRef.current) {
         wasVisibleRef.current = false;
+        hasInitRef.current = false; // reset so next appearance snaps first
         onAnchorLost?.();
       }
       group.visible = false;
     }
   });
 
-  // Cleanup callback refs on unmount
   useEffect(() => {
     return () => {
       wasVisibleRef.current = false;
