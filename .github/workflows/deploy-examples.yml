@@ -23,6 +23,9 @@ jobs:
             examples/basic/package-lock.json
             examples/video-texture/package-lock.json
 
+      - name: Build library
+        run: npm ci && npm run build
+
       - name: Build basic example
         working-directory: examples/basic
         run: |
