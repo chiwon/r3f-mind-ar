@@ -77,12 +77,22 @@ export function App() {
             alignItems: 'center',
             justifyContent: 'center',
             background: 'rgba(0,0,0,0.7)',
-            gap: 12,
+            gap: 16,
           }}
         >
           <p style={{ color: '#fff', fontFamily: 'system-ui, sans-serif', fontSize: 15, margin: 0, opacity: 0.8 }}>
             Point your camera at the target card
           </p>
+          <a href={`${import.meta.env.BASE_URL}card.png`} download="card.png" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+            <img
+              src={`${import.meta.env.BASE_URL}card.png`}
+              alt="AR target card"
+              style={{ width: 160, borderRadius: 10, boxShadow: '0 4px 24px rgba(0,0,0,0.5)' }}
+            />
+            <span style={{ color: '#a5b4fc', fontFamily: 'system-ui, sans-serif', fontSize: 13 }}>
+              Download target card
+            </span>
+          </a>
           <button
             type="button"
             onClick={handleStart}
