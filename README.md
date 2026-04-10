@@ -130,6 +130,41 @@ Live demos (mobile-friendly, camera required):
 
 Each demo includes a downloadable AR target card on the start screen.
 
+### Rendering architecture: Video layer vs. Video Texture
+
+Understanding the two rendering approaches helps you decide which one fits your use case.
+
+**Default (Basic example) — `<video>` + transparent Canvas**
+
+```
+┌─────────────────────────────┐
+│  R3F Canvas (transparent)   │  ← 3D objects rendered here
+│  z-index: above             │
+├─────────────────────────────┤
+│  <video> element (CSS)      │  ← camera feed as DOM element
+│  z-index: below             │
+└─────────────────────────────┘
+```
+
+The camera feed is a plain `<video>` element sitting behind a transparent Canvas. This is simple and performant, but post-processing passes (Bloom, SSAO, etc.) only operate on the WebGL framebuffer — they have no access to the video layer underneath. Effects cannot bleed into or interact with the camera background.
+
+**Video Texture (video-texture example) — everything inside WebGL**
+
+```
+┌─────────────────────────────┐
+│  R3F Canvas                 │
+│  ┌───────────────────────┐  │
+│  │ video → WebGL texture │  │  ← camera feed sampled as texture
+│  │ + 3D objects          │  │  ← composited in the same pipeline
+│  └───────────────────────┘  │
+│  EffectComposer (Bloom…)    │  ← post-processing sees everything
+└─────────────────────────────┘
+```
+
+The camera feed is sampled as a WebGL texture and rendered as a fullscreen plane inside the scene. Because the video and 3D content share the same framebuffer, post-processing effects apply to the full composite — Bloom glow can spill across object edges and the video background correctly.
+
+> **Rule of thumb**: use the default approach for most AR scenes. Switch to the video texture approach only when you need post-processing effects that must interact with the camera background.
+
 Run locally:
 
 ```bash
