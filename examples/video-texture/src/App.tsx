@@ -29,7 +29,7 @@ export function App() {
 		<div style={{ width: "100vw", height: "100vh", position: "relative" }}>
 			<ARView
 				ref={arRef}
-				imageTargets="/targets.mind"
+				imageTargets={`${import.meta.env.BASE_URL}targets.mind`}
 				maxTrack={1}
 				autoplay={false}
 				onReady={() => {
@@ -275,7 +275,7 @@ function Atom({ radius, speed, phase, color, axisX, axisY }: AtomProps) {
 // ---------------------------------------------------------------------------
 function BitcoinModel() {
   const groupRef = useRef<Group>(null);
-  const { scene } = useGLTF('/bitcoin.glb');
+  const { scene } = useGLTF(`${import.meta.env.BASE_URL}bitcoin.glb`);
 
   return (
     <group
@@ -293,4 +293,4 @@ function BitcoinModel() {
   );
 }
 
-useGLTF.preload('/bitcoin.glb');
+useGLTF.preload(`${import.meta.env.BASE_URL}bitcoin.glb`);
